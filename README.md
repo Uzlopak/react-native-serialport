@@ -32,4 +32,4 @@
 | DRIVER                 | AUTO                                     |
 
 ### Java Package Name
- _com.melihyarikkaya.rnserialport_
+ _com.uzlopak.rnserialport_
