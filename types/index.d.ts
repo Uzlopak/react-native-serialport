@@ -224,28 +224,12 @@ interface RNSerialportStatic {
   disconnect(): void;
 
   /**
-   * Writes string to port
+   * Writes Uint8Array to port
    *
-   * @param {string} data
+   * @param {Uint8Array} data
    * @memberof RNSerialportStatic
    */
-  writeString(data: string): void;
-
-  /**
-   * Writes Base64 string to port
-   *
-   * @param {string} data
-   * @memberof RNSerialportStatic
-   */
-  writeBase64(data: string): void;
-
-  /**
-   * Writes hex string to port
-   *
-   * @param {string} data
-   * @memberof RNSerialportStatic
-   */
-  writeHexString(data: string): void
+  write(data: Uint8Array): void;
 
   /**
    * Integer array convert to Utf16 string

@@ -377,7 +377,7 @@ public class RNSerialportModule extends ReactContextBaseJavaModule {
   }
 
   @ReactMethod
-  public void writeBytes(byte[] bytes) {
+  public void write(byte[] bytes) {
     if(!usbServiceStarted){
       eventEmit(onErrorEvent, createError(Definitions.ERROR_USB_SERVICE_NOT_STARTED, Definitions.ERROR_USB_SERVICE_NOT_STARTED_MESSAGE));
       return;
@@ -387,66 +387,6 @@ public class RNSerialportModule extends ReactContextBaseJavaModule {
       return;
     }
     serialPort.write(bytes);
-  }
-
-  @ReactMethod
-  public void writeString(String message) {
-    if(!usbServiceStarted){
-      eventEmit(onErrorEvent, createError(Definitions.ERROR_USB_SERVICE_NOT_STARTED, Definitions.ERROR_USB_SERVICE_NOT_STARTED_MESSAGE));
-      return;
-    }
-    if(!serialPortConnected || serialPort == null) {
-      eventEmit(onErrorEvent, createError(Definitions.ERROR_THERE_IS_NO_CONNECTION, Definitions.ERROR_THERE_IS_NO_CONNECTION_MESSAGE));
-      return;
-    }
-
-    serialPort.write(message.getBytes());
-  }
-
-  @ReactMethod
-  public void writeBase64(String message) {
-    if(!usbServiceStarted){
-      eventEmit(onErrorEvent, createError(Definitions.ERROR_USB_SERVICE_NOT_STARTED, Definitions.ERROR_USB_SERVICE_NOT_STARTED_MESSAGE));
-      return;
-    }
-    if(!serialPortConnected || serialPort == null) {
-      eventEmit(onErrorEvent, createError(Definitions.ERROR_THERE_IS_NO_CONNECTION, Definitions.ERROR_THERE_IS_NO_CONNECTION_MESSAGE));
-      return;
-    }
-
-    byte [] data = Base64.decode(message, Base64.DEFAULT);
-    serialPort.write(data);
-  }
-
-  @ReactMethod
-  public void writeHexString(String message) {
-    if(!usbServiceStarted){
-      eventEmit(onErrorEvent, createError(Definitions.ERROR_USB_SERVICE_NOT_STARTED, Definitions.ERROR_USB_SERVICE_NOT_STARTED_MESSAGE));
-      return;
-    }
-    if(!serialPortConnected || serialPort == null) {
-      eventEmit(onErrorEvent, createError(Definitions.ERROR_THERE_IS_NO_CONNECTION, Definitions.ERROR_THERE_IS_NO_CONNECTION_MESSAGE));
-      return;
-    }
-
-    if(message.length() < 1) {
-      return;
-    }
-
-    byte[] data = new byte[message.length() / 2];
-    for (int i = 0; i < data.length; i++) {
-      int index = i * 2;
-
-      String hex = message.substring(index, index + 2);
-
-      if(Definitions.hexChars.indexOf(hex.substring(0, 1)) == -1 || Definitions.hexChars.indexOf(hex.substring(1, 1)) == -1) {
-          return;
-      }
-
-      int v = Integer.parseInt(hex, 16);
-      data[i] = (byte) v;
-    }
-    serialPort.write(data);
   }
 
   ///////////////////////////////////////////////USB SERVICE /////////////////////////////////////////////////////////

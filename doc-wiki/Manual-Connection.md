@@ -263,7 +263,7 @@ class ManualConnection extends Component {
   }
 
   handleSendButton() {
-    RNSerialport.writeString(this.state.sendText);
+    RNSerialport.write(new TextEncoder().encode(this.state.sendText));
   }
   handleClearButton() {
     this.setState({ output: "" });

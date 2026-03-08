@@ -14,9 +14,7 @@
 
 ### Use to write data to port
 ```javascript
- RNSerialport.writeString("HELLO");
- RNSerialport.writeBase64("SEVMTE8=");
- RNSerialport.writeHexString("48454C4C4F");
+ RNSerialport.write([0x48, 0x45, 0x4C, 0x4C, 0x4F]);
 ```
 ### DEFAULT DEFINITIONS
 | KEY                    | VALUE                                    |
