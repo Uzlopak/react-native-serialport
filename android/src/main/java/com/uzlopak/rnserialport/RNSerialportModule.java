@@ -90,7 +90,6 @@ public class RNSerialportModule extends ReactContextBaseJavaModule {
 
 
   private boolean autoConnect = false;
-  private String autoConnectDeviceName;
   private int autoConnectBaudRate = 9600;
   private int portInterface = -1;
   private String driver = "AUTO";
@@ -117,8 +116,11 @@ public class RNSerialportModule extends ReactContextBaseJavaModule {
           break;
         case ACTION_USB_ATTACHED:
           eventEmit(onDeviceAttachedEvent, null);
-          if(autoConnect && chooseFirstDevice() != null) {
-            connectDevice(autoConnectDeviceName, autoConnectBaudRate);
+          if(autoConnect) {
+            UsbDevice d = chooseFirstDevice();
+            if (d != null) {
+              connectDevice(d.getDeviceName(), autoConnectBaudRate);
+            }
           }
           break;
         case ACTION_USB_DETACHED:
@@ -416,7 +418,6 @@ public class RNSerialportModule extends ReactContextBaseJavaModule {
         continue;
       }
 
-      autoConnectDeviceName = d.getDeviceName();
       return d;
     }
     return null;
@@ -426,8 +427,9 @@ public class RNSerialportModule extends ReactContextBaseJavaModule {
     if(!autoConnect || serialPortConnected)
       return;
 
-    if(chooseFirstDevice() != null) {
-      connectDevice(autoConnectDeviceName, autoConnectBaudRate);
+    UsbDevice d = chooseFirstDevice();
+    if(d != null) {
+      connectDevice(d.getDeviceName(), autoConnectBaudRate);
     }
   }
   private class ConnectionThread extends Thread {
