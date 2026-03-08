@@ -281,27 +281,24 @@ public class RNSerialportModule extends ReactContextBaseJavaModule {
       promise.reject(String.valueOf(Definitions.ERROR_USB_SERVICE_NOT_STARTED), Definitions.ERROR_USB_SERVICE_NOT_STARTED_MESSAGE);
       return;
     }
-
+    
     UsbManager manager = (UsbManager) reactContext.getSystemService(Context.USB_SERVICE);
-
     HashMap<String, UsbDevice> devices = manager.getDeviceList();
 
-    if(devices.isEmpty()) {
-      //promise.reject(String.valueOf(Definitions.ERROR_DEVICE_NOT_FOUND), Definitions.ERROR_DEVICE_NOT_FOUND_MESSAGE);
-      promise.resolve(Arguments.createArray());
-      return;
-    }
-
     WritableArray deviceList = Arguments.createArray();
-    for(Map.Entry<String, UsbDevice> entry: devices.entrySet()) {
-      UsbDevice d = entry.getValue();
 
-      WritableMap map = Arguments.createMap();
-      map.putString("name", d.getDeviceName());
-      map.putInt("vendorId", d.getVendorId());
-      map.putInt("productId", d.getProductId());
+    if(!devices.isEmpty()) {
+      for(Map.Entry<String, UsbDevice> entry: devices.entrySet()) {
+        UsbDevice usbDevice = entry.getValue();
 
-      deviceList.pushMap(map);
+        WritableMap map = Arguments.createMap();
+        map.putInt("deviceId", usbDevice.getDeviceId());
+        map.putString("deviceName", usbDevice.getDeviceName());
+        map.putInt("vendorId", usbDevice.getVendorId());
+        map.putInt("productId", usbDevice.getProductId());
+
+        deviceList.pushMap(map);
+      }
     }
 
     promise.resolve(deviceList);

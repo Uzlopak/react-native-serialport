@@ -1,10 +1,9 @@
-export interface IDevice {
-  name: string;
+export interface Device {
+  deviceId: string;
+  deviceName: string;
   vendorId: number;
   productId: number;
 }
-
-export type Devices = Array<IDevice>;
 
 export interface IOnReadData {
   payload: string | Array<number>
@@ -203,10 +202,10 @@ interface RNSerialportStatic {
   /**
    * Returns the device list via Promise
    *
-   * @returns {Promise<Device>}
+   * @returns {Promise<Array<Device>>}
    * @memberof RNSerialportStatic
    */
-  getDeviceList(): Promise<Devices>;
+  getDeviceList(): Promise<Array<Device>>;
 
   /**
    * Connect to device with device name and baud rate
