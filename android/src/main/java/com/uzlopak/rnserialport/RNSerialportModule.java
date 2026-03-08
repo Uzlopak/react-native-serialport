@@ -117,7 +117,7 @@ public class RNSerialportModule extends ReactContextBaseJavaModule {
           break;
         case ACTION_USB_ATTACHED:
           eventEmit(onDeviceAttachedEvent, null);
-          if(autoConnect && chooseFirstDevice()) {
+          if(autoConnect && chooseFirstDevice() != null) {
             connectDevice(autoConnectDeviceName, autoConnectBaudRate);
           }
           break;
@@ -385,46 +385,48 @@ public class RNSerialportModule extends ReactContextBaseJavaModule {
     }
 
     for (Map.Entry<String, UsbDevice> entry: usbDevices.entrySet()) {
-      UsbDevice device = entry.getValue();
+      UsbDevice d = entry.getValue();
 
-      if(device.getDeviceName().equals(deviceName)) {
-        return device;
+      if(d.getDeviceName().equals(deviceName)) {
+        return d;
       }
     }
 
     return null;
   }
 
-  private boolean chooseFirstDevice() {
+  private boolean ignoreDevice(UsbDevice device) {
+    int deviceVID = device.getVendorId();
+    int devicePID = device.getProductId();
+
+    return (deviceVID == 0x1d6b && (devicePID == 0x0001 || devicePID == 0x0002 || devicePID == 0x0003) || deviceVID == 0x5c6 && devicePID == 0x904c);
+  }
+
+  private UsbDevice chooseFirstDevice() {
     HashMap<String, UsbDevice> usbDevices = usbManager.getDeviceList();
     if(usbDevices.isEmpty()) {
-      return false;
+      return null;
     }
 
-    boolean selected = false;
-
+    UsbDevice d = null;
     for (Map.Entry<String, UsbDevice> entry: usbDevices.entrySet()) {
-      UsbDevice d = entry.getValue();
+      entry.getValue();
 
-      int deviceVID = d.getVendorId();
-      int devicePID = d.getProductId();
-
-      if (deviceVID != 0x1d6b && (devicePID != 0x0001 && devicePID != 0x0002 && devicePID != 0x0003) && deviceVID != 0x5c6 && devicePID != 0x904c)
-      {
-        device = d;
-        autoConnectDeviceName = d.getDeviceName();
-        selected = true;
-        break;
+      if (ignoreDevice(d)) {
+        continue;
       }
+
+      autoConnectDeviceName = d.getDeviceName();
+      return d;
     }
-    return selected;
+    return null;
   }
 
   private void checkAutoConnect() {
     if(!autoConnect || serialPortConnected)
       return;
 
-    if(chooseFirstDevice()) {
+    if(chooseFirstDevice() != null) {
       connectDevice(autoConnectDeviceName, autoConnectBaudRate);
     }
   }
