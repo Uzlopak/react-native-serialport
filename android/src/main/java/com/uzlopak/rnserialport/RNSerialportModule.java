@@ -18,8 +18,6 @@ import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 import com.facebook.react.bridge.WritableNativeArray;
 
-import android.util.Base64;
-
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -93,7 +91,6 @@ public class RNSerialportModule extends ReactContextBaseJavaModule {
   private int autoConnectBaudRate = 9600;
   private int portInterface = -1;
   private String driver = "AUTO";
-
 
   private boolean usbServiceStarted = false;
 
@@ -355,12 +352,12 @@ public class RNSerialportModule extends ReactContextBaseJavaModule {
 
   @ReactMethod
   public void isSupported(String deviceName, Promise promise) {
-    UsbDevice device = chooseDevice(deviceName);
+    UsbDevice d = chooseDevice(deviceName);
 
-    if(device == null) {
+    if(d == null) {
       promise.reject(String.valueOf(Definitions.ERROR_DEVICE_NOT_FOUND), Definitions.ERROR_DEVICE_NOT_FOUND_MESSAGE);
     } else {
-      promise.resolve(UsbSerialDevice.isSupported(device));
+      promise.resolve(UsbSerialDevice.isSupported(d));
     }
   }
 
@@ -397,9 +394,9 @@ public class RNSerialportModule extends ReactContextBaseJavaModule {
     return null;
   }
 
-  private boolean ignoreDevice(UsbDevice device) {
-    int deviceVID = device.getVendorId();
-    int devicePID = device.getProductId();
+  private boolean ignoreDevice(UsbDevice d) {
+    int deviceVID = d.getVendorId();
+    int devicePID = d.getProductId();
 
     return (deviceVID == 0x1d6b && (devicePID == 0x0001 || devicePID == 0x0002 || devicePID == 0x0003) || deviceVID == 0x5c6 && devicePID == 0x904c);
   }
