@@ -315,7 +315,7 @@ public class RNSerialportModule extends ReactContextBaseJavaModule {
         this.BAUD_RATE = baudRate;
       }
 
-      if(!chooseDevice(deviceName)) {
+      if(chooseDevice(deviceName) == null) {
         eventEmit(onErrorEvent, createError(Definitions.ERROR_X_DEVICE_NOT_FOUND, Definitions.ERROR_X_DEVICE_NOT_FOUND_MESSAGE + deviceName));
         return;
       }
@@ -353,7 +353,9 @@ public class RNSerialportModule extends ReactContextBaseJavaModule {
 
   @ReactMethod
   public void isSupported(String deviceName, Promise promise) {
-    if(!chooseDevice(deviceName)) {
+    UsbDevice device = chooseDevice(deviceName);
+
+    if(device == null) {
       promise.reject(String.valueOf(Definitions.ERROR_DEVICE_NOT_FOUND), Definitions.ERROR_DEVICE_NOT_FOUND_MESSAGE);
     } else {
       promise.resolve(UsbSerialDevice.isSupported(device));
@@ -376,25 +378,21 @@ public class RNSerialportModule extends ReactContextBaseJavaModule {
   ///////////////////////////////////////////////USB SERVICE /////////////////////////////////////////////////////////
   ///////////////////////////////////////////////USB SERVICE /////////////////////////////////////////////////////////
 
-  private boolean chooseDevice(String deviceName) {
+  private UsbDevice chooseDevice(String deviceName) {
     HashMap<String, UsbDevice> usbDevices = usbManager.getDeviceList();
     if(usbDevices.isEmpty()) {
-      return false;
+      return null;
     }
 
-    boolean selected = false;
-
     for (Map.Entry<String, UsbDevice> entry: usbDevices.entrySet()) {
-      UsbDevice d = entry.getValue();
+      UsbDevice device = entry.getValue();
 
-      if(d.getDeviceName().equals(deviceName)) {
-        device = d;
-        selected = true;
-        break;
+      if(device.getDeviceName().equals(deviceName)) {
+        return device;
       }
     }
 
-    return selected;
+    return null;
   }
 
   private boolean chooseFirstDevice() {
