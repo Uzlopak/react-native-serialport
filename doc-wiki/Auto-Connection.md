@@ -49,7 +49,6 @@ componentDidMount() {
   //.
   // Set Your Callback Methods in here
   //.
-  RNSerialport.setReturnedDataType(definitions.RETURNED_DATA_TYPES.HEXSTRING);
   RNSerialport.setAutoConnect(true);
   RNSerialport.setAutoConnectBaudRate(9600);
   RNSerialport.startUsbService();
@@ -128,7 +127,6 @@ export default class App extends Component<Props> {
       this
     );
     RNSerialport.setInterface(-1); //default -1
-    RNSerialport.setReturnedDataType(definitions.RETURNED_DATA_TYPES.HEXSTRING); //default INTARRAY
     RNSerialport.setAutoConnectBaudRate(9600)
     RNSerialport.setAutoConnect(true) // must be true for auto connect
     RNSerialport.startUsbService(); //start usb listener

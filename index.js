@@ -27,10 +27,6 @@ const definitions = {
     FLOW_CONTROL_DSR_DTR : 2,
     FLOW_CONTROL_XON_XOFF: 3
   },
-  RETURNED_DATA_TYPES: {
-    INTARRAY : 1,
-    HEXSTRING: 2
-  },
   DRIVER_TYPES: {
     AUTO    : "AUTO",
     CDC     : "cdc",
@@ -51,21 +47,5 @@ const actions = {
   ON_DISCONNECTED         : 'onDisconnected',
   ON_READ_DATA            : 'onReadDataFromPort'
 };
-
-RNSerialport.intArrayToUtf16 = (intArray) => {
-  var str = "";
-  for (var i = 0; i < intArray.length; i++) {
-    str += String.fromCharCode(intArray[i]);
-  }
-  return str;
-}
-RNSerialport.hexToUtf16 = (hex) => {
-  var str = "";
-  var radix = 16;
-  for (var i = 0; i < hex.length && hex.substr(i, 2) !== "00"; i += 2) {
-    str += String.fromCharCode(parseInt(hex.substr(i, 2), radix));
-  }
-  return str;
-}
 
 module.exports = { RNSerialport, definitions, actions };

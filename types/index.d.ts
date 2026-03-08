@@ -43,10 +43,6 @@ interface DefinitionsStatic {
     FLOW_CONTROL_DSR_DTR: number;
     FLOW_CONTROL_XON_XOFF: number;
   };
-  RETURNED_DATA_TYPES: {
-    INTARRAY: number;
-    HEXSTRING: number;
-  };
   DRIVER_TYPES: {
     AUTO: string,
     CDC: string,
@@ -74,7 +70,6 @@ type DataBits = 5 | 6 | 7 | 8;
 type StopBits = 1 | 2 | 3;
 type Parities = 0 | 1 | 2 | 3 | 4;
 type FlowControls = 0 | 1 | 2 | 3;
-type ReturnedDataTypes = 1 | 2;
 type Drivers = "AUTO" | "cdc" | "ch34x" | "cp210x" | "ftdi" | "pl2303";
 
 interface RNSerialportStatic {
@@ -117,14 +112,6 @@ interface RNSerialportStatic {
   isSupported(deviceName: string): Promise<boolean>;
 
   //Begin setter methods
-
-  /**
-   * Set the returned data type
-   *
-   * @param {ReturnedDataTypes} type
-   * @memberof RNSerialportStatic
-   */
-  setReturnedDataType(type: ReturnedDataTypes): void;
 
   /**
    * Set the interface
@@ -230,23 +217,5 @@ interface RNSerialportStatic {
    * @memberof RNSerialportStatic
    */
   write(data: Uint8Array): void;
-
-  /**
-   * Integer array convert to Utf16 string
-   *
-   * @param {Array<number>} intArray
-   * @returns {string}
-   * @memberof RNSerialportStatic
-   */
-  intArrayToUtf16(intArray: Array<number>): string
-
-  /**
-   * Hex string convert to Utf16 string
-   *
-   * @param {string} hex
-   * @returns {string}
-   * @memberof RNSerialportStatic
-   */
-  hexToUtf16(hex: string): string
 }
 export var RNSerialport: RNSerialportStatic;

@@ -19,7 +19,6 @@
 ### DEFAULT DEFINITIONS
 | KEY                    | VALUE                                    |
 |------------------------|------------------------------------------|
-| RETURNED DATA TYPE     | INT ARRAY (Options: INTARRAY, HEXSTRING) |
 | BAUND RATE             | 9600                                     |
 | AUTO CONNECT BAUD RATE | 9600                                     |
 | PORT INTERFACE         | -1                                       |

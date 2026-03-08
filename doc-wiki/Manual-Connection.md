@@ -47,7 +47,6 @@ componentDidMount() {
   //.
   // Set Your Callback Methods in here
   //.
-  RNSerialport.setReturnedDataType(definitions.RETURNED_DATA_TYPES.HEXSTRING);
   RNSerialport.setAutoConnect(false);
   RNSerialport.startUsbService();
   //Started usb listener
@@ -160,7 +159,6 @@ class ManualConnection extends Component {
       this
     );
     DeviceEventEmitter.addListener(actions.ON_READ_DATA, this.onReadData, this);
-    RNSerialport.setReturnedDataType(this.state.returnedDataType);
     RNSerialport.setAutoConnect(false);
     RNSerialport.startUsbService();
   }
@@ -203,15 +201,7 @@ class ManualConnection extends Component {
     this.setState({ connected: false });
   }
   onReadData(data) {
-    if (
-      this.state.returnedDataType === definitions.RETURNED_DATA_TYPES.INTARRAY
-    ) {
-      const payload = RNSerialport.intArrayToUtf16(data.payload);
-      this.setState({ output: this.state.output + payload });
-    } else if (
-      this.state.returnedDataType === definitions.RETURNED_DATA_TYPES.HEXSTRING
-    ) {
-      const payload = RNSerialport.hexToUtf16(data.payload);
+      const payload = new TextDecoder().decode(new Uint8Array(data.payload));
       this.setState({ output: this.state.output + payload });
     }
   }
@@ -221,19 +211,7 @@ class ManualConnection extends Component {
   }
 
   handleConvertButton() {
-    let data = "";
-    if (
-      this.state.returnedDataType === definitions.RETURNED_DATA_TYPES.HEXSTRING
-    ) {
-      data = RNSerialport.hexToUtf16(this.state.output);
-    } else if (
-      this.state.returnedDataType === definitions.RETURNED_DATA_TYPES.INTARRAY
-    ) {
-      data = RNSerialport.intArrayToUtf16(this.state.outputArray);
-    } else {
-      return;
-    }
-    this.setState({ output: data });
+    this.setState({ output: new TextDecoder().decode(new Uint8Array(this.state.outputArray)) });
   }
   fillDeviceList = async () => {
     try {

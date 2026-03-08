@@ -93,7 +93,6 @@ public class RNSerialportModule extends ReactContextBaseJavaModule {
   private String autoConnectDeviceName;
   private int autoConnectBaudRate = 9600;
   private int portInterface = -1;
-  private int returnedDataType = Definitions.RETURNED_DATA_TYPE_INTARRAY;
   private String driver = "AUTO";
 
 
@@ -220,12 +219,6 @@ public class RNSerialportModule extends ReactContextBaseJavaModule {
   @ReactMethod
   public void setInterface(int iFace) {
     this.portInterface = iFace;
-  }
-  @ReactMethod
-  public void setReturnedDataType(int type) {
-    if(type == Definitions.RETURNED_DATA_TYPE_HEXSTRING || type == Definitions.RETURNED_DATA_TYPE_INTARRAY) {
-      this.returnedDataType = type;
-    }
   }
 
   @ReactMethod
@@ -534,23 +527,13 @@ public class RNSerialportModule extends ReactContextBaseJavaModule {
     public void onReceivedData(byte[] bytes) {
       try {
 
-        String payloadKey = "payload";
+        WritableArray uint8Array = new WritableNativeArray();
+        for(byte b: bytes) {
+          uint8Array.pushInt(UnsignedBytes.toInt(b));
+        }
 
         WritableMap params = Arguments.createMap();
-
-        if(returnedDataType == Definitions.RETURNED_DATA_TYPE_INTARRAY) {
-
-          WritableArray intArray = new WritableNativeArray();
-          for(byte b: bytes) {
-            intArray.pushInt(UnsignedBytes.toInt(b));
-          }
-          params.putArray(payloadKey, intArray);
-
-        } else if(returnedDataType == Definitions.RETURNED_DATA_TYPE_HEXSTRING) {
-          String hexString = Definitions.bytesToHex(bytes);
-          params.putString(payloadKey, hexString);
-        } else
-          return;
+        params.putArray("payload", uint8Array);
 
         eventEmit(onReadDataFromPort, params);
 
