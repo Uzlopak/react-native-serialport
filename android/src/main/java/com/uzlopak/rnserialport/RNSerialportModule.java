@@ -20,6 +20,7 @@ import com.facebook.react.bridge.WritableNativeArray;
 
 import android.util.Base64;
 
+import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -40,7 +41,6 @@ public class RNSerialportModule extends ReactContextBaseJavaModule {
   public RNSerialportModule(ReactApplicationContext reactContext) {
     super(reactContext);
     this.reactContext = reactContext;
-    fillDriverList();
   }
 
   @Override
@@ -73,7 +73,7 @@ public class RNSerialportModule extends ReactContextBaseJavaModule {
 
   //SUPPORTED DRIVER LIST
 
-  private List<String> driverList;
+  private final List<String> driverList = new ArrayList<String>(Arrays.asList("ftdi", "cp210x", "pl2303", "ch34x", "cdc"));
 
   private UsbManager usbManager;
   private UsbDevice device;
@@ -171,15 +171,6 @@ public class RNSerialportModule extends ReactContextBaseJavaModule {
     filter.addAction(ACTION_USB_ATTACHED);
     filter.addAction(ACTION_USB_DETACHED);
     reactContext.registerReceiver(mUsbReceiver, filter);
-  }
-
-  private void fillDriverList() {
-    driverList = new ArrayList<>();
-    driverList.add("ftdi");
-    driverList.add("cp210x");
-    driverList.add("pl2303");
-    driverList.add("ch34x");
-    driverList.add("cdc");
   }
 
   /******************************* BEGIN PUBLIC SETTER METHODS **********************************/
