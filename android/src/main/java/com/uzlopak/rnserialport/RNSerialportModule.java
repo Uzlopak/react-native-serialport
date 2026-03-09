@@ -12,6 +12,7 @@ import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.ReactMethod;
+import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
@@ -47,7 +48,7 @@ public class RNSerialportModule extends ReactContextBaseJavaModule {
 
   //SUPPORTED DRIVER LIST
 
-  private final List<String> driverList = new ArrayList<String>(Arrays.asList("ftdi", "cp210x", "pl2303", "ch34x", "cdc"));
+  private final List<String> driverList = new ArrayList<String>(Arrays.asList("AUTO", "ftdi", "cp210x", "pl2303", "ch34x", "cdc"));
 
   private UsbManager usbManager;
   private UsbDevice device;
@@ -274,7 +275,7 @@ public class RNSerialportModule extends ReactContextBaseJavaModule {
         return;
       }
 
-      if(deviceName.isEmpty() || deviceName.length() < 0) {
+      if(deviceName.isEmpty() || deviceName.trim().isEmpty()) {
         eventEmit(Definitions.ON_ERROR_EVENT, createError(Definitions.ERROR_CONNECT_DEVICE_NAME_INVALID, Definitions.ERROR_CONNECT_DEVICE_NAME_INVALID_MESSAGE));
         return;
       }
@@ -288,10 +289,14 @@ public class RNSerialportModule extends ReactContextBaseJavaModule {
         this.BAUD_RATE = baudRate;
       }
 
-      if(chooseDevice(deviceName) == null) {
+      UsbDevice d = chooseDevice(deviceName);
+
+      if(d == null) {
         eventEmit(Definitions.ON_ERROR_EVENT, createError(Definitions.ERROR_X_DEVICE_NOT_FOUND, Definitions.ERROR_X_DEVICE_NOT_FOUND_MESSAGE + deviceName));
         return;
       }
+
+      this.device = d;
 
       requestUserPermission();
 
@@ -336,7 +341,7 @@ public class RNSerialportModule extends ReactContextBaseJavaModule {
   }
 
   @ReactMethod
-  public void write(byte[] bytes) {
+  public void write(ReadableArray bytes) {
     if(!usbServiceStarted){
       eventEmit(Definitions.ON_ERROR_EVENT, createError(Definitions.ERROR_USB_SERVICE_NOT_STARTED, Definitions.ERROR_USB_SERVICE_NOT_STARTED_MESSAGE));
       return;
@@ -381,9 +386,8 @@ public class RNSerialportModule extends ReactContextBaseJavaModule {
       return null;
     }
 
-    UsbDevice d = null;
     for (Map.Entry<String, UsbDevice> entry: usbDevices.entrySet()) {
-      entry.getValue();
+      UsbDevice d = entry.getValue();
 
       if (ignoreDevice(d)) {
         continue;
