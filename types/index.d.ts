@@ -179,13 +179,6 @@ interface RNSerialportStatic {
   //End setter methods
 
   /**
-   * Load the default connection settings
-   *
-   * @memberof RNSerialportStatic
-   */
-  loadDefaultConnectionSetting(): void;
-
-  /**
    * Returns the device list via Promise
    *
    * @returns {Promise<Array<Device>>}

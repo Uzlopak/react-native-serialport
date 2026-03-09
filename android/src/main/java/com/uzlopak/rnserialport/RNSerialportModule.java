@@ -103,12 +103,12 @@ public class RNSerialportModule extends ReactContextBaseJavaModule {
   private int STOP_BIT     = UsbSerialInterface.STOP_BITS_1;
   private int PARITY       = UsbSerialInterface.PARITY_NONE;
   private int FLOW_CONTROL = UsbSerialInterface.FLOW_CONTROL_OFF;
-  private int BAUD_RATE = 9600;
+  private int BAUD_RATE    = 9600;
 
-  private boolean autoConnect = false;
+  private boolean autoConnect     = false;
   private int autoConnectBaudRate = 9600;
-  private int portInterface = -1;
-  private String driver = "AUTO";
+  private int portInterface       = -1;
+  private String driver           = "AUTO";
 
   private boolean usbServiceStarted = false;
 
@@ -168,13 +168,6 @@ public class RNSerialportModule extends ReactContextBaseJavaModule {
     this.FLOW_CONTROL = FLOW_CONTROL;
   }
 
-  @ReactMethod
-  public void loadDefaultConnectionSetting() {
-    DATA_BIT     = UsbSerialInterface.DATA_BITS_8;
-    STOP_BIT     = UsbSerialInterface.STOP_BITS_1;
-    PARITY       = UsbSerialInterface.PARITY_NONE;
-    FLOW_CONTROL = UsbSerialInterface.FLOW_CONTROL_OFF;
-  }
   @ReactMethod
   public void setAutoConnect(boolean autoConnect) {
     this.autoConnect = autoConnect;

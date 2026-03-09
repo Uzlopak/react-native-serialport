@@ -21,7 +21,6 @@
 [setStopBit](https://github.com/melihyarikkaya/react-native-serialport/wiki/Methods/#setStopBit)  
 [setParity](https://github.com/melihyarikkaya/react-native-serialport/wiki/Methods/#setParity)  
 [setFlowControl](https://github.com/melihyarikkaya/react-native-serialport/wiki/Methods/#setFlowControl)  
-[loadDefaultConnectionSetting](https://github.com/melihyarikkaya/react-native-serialport/wiki/Methods/#loadDefaultConnectionSetting)
 
 ### startUsbService
 
@@ -425,24 +424,6 @@ Params:
 ```javascript
 import { definitions } from "react-native-serialport";
 RNSerialport.setFlowControl(definitions.FLOW_CONTROLS.FLOW_CONTROL_OFF);
-```
-
----
-
-### loadDefaultConnectionSetting
-
-_Loads the default settings_
-
-> Defaults:  
-> DATA_BIT: DATA_BITS_8  
-> STOP_BIT: STOP_BITS_1  
-> PARITY: PARITY_NONE  
-> FLOW_CONTROL: FLOW_CONTROL_OFF
-
-No Params
-
-```javascript
-RNSerialport.loadDefaultConnectionSetting();
 ```
 
 ---
