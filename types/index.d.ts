@@ -9,10 +9,10 @@ export interface IOnReadData {
   payload: string | Array<number>
 }
 export interface IOnError {
-  status: boolean;
-  errorCode: number;
-  errorMessage: string;
-  exceptionErrorMessage?: string;
+  code: string;
+  message: string;
+  deviceName?: string;
+  exceptionMessage?: string;
 }
 export interface IOnServiceStarted {
 }
