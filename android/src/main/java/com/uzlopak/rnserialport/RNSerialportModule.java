@@ -35,7 +35,6 @@ import com.felhr.usbserial.UsbSerialInterface;
 
 public class RNSerialportModule extends ReactContextBaseJavaModule {
   enum Error {
-    NO_USB_DEVICES_FOUND ("NO_USB_DEVICES_FOUND", "No USB devices found."),
     DEVICE_NOT_FOUND ("DEVICE_NOT_FOUND", "Device not found."),
     CONNECT_DEVICE_NAME_INVALID ("CONNECT_DEVICE_NAME_INVALID", "Device name cannot be invalid or empty."),
     CONNECT_BAUDRATE_INVALID ("CONNECT_BAUDRATE_INVALID", "BaudRate is invalid."),
@@ -60,7 +59,6 @@ public class RNSerialportModule extends ReactContextBaseJavaModule {
     }
   }
 
-  private final String ACTION_NO_USB                           = "com.felhr.usbservice.NO_USB";
   private final String ACTION_USB_ATTACHED                     = "android.hardware.usb.action.USB_DEVICE_ATTACHED";
   private final String ACTION_USB_CONNECT                      = "com.uzlopak.rnserialport.USB_CONNECT";
   private final String ACTION_USB_DETACHED                     = "android.hardware.usb.action.USB_DEVICE_DETACHED";
@@ -121,8 +119,8 @@ public class RNSerialportModule extends ReactContextBaseJavaModule {
     @Override
     public void onReceive(Context ctx, Intent intent) {
       switch (intent.getAction()) {
-        case ACTION_NO_USB: emitErrorEvent(Error.NO_USB_DEVICES_FOUND); break;
         case ACTION_USB_ATTACHED: emitEvent(ON_DEVICE_ATTACHED_EVENT, null); handleUsbAttached(); break;
+        case ACTION_USB_READY: break;
         case ACTION_USB_CONNECT: emitEvent(ON_CONNECTED_EVENT, null); break;
         case ACTION_USB_DETACHED: emitEvent(ON_DEVICE_DETACHED_EVENT, null); handleUsbDetached(); break;
         case ACTION_USB_DISCONNECTED: emitEvent(ON_DISCONNECTED_EVENT, null); break;
@@ -180,7 +178,7 @@ public class RNSerialportModule extends ReactContextBaseJavaModule {
   public void loadDefaultConnectionSetting() {
     DATA_BIT     = UsbSerialInterface.DATA_BITS_8;
     STOP_BIT     = UsbSerialInterface.STOP_BITS_1;
-    PARITY       =  UsbSerialInterface.PARITY_NONE;
+    PARITY       = UsbSerialInterface.PARITY_NONE;
     FLOW_CONTROL = UsbSerialInterface.FLOW_CONTROL_OFF;
   }
   @ReactMethod
@@ -215,7 +213,6 @@ public class RNSerialportModule extends ReactContextBaseJavaModule {
     }
   
     IntentFilter filter = new IntentFilter();
-    filter.addAction(ACTION_NO_USB);
     filter.addAction(ACTION_USB_ATTACHED);
     filter.addAction(ACTION_USB_CONNECT);
     filter.addAction(ACTION_USB_DETACHED);
