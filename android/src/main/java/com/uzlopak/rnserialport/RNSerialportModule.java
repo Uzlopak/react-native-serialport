@@ -78,7 +78,7 @@ public class RNSerialportModule extends ReactContextBaseJavaModule {
   private final String ON_SERVICE_STARTED           = "onServiceStarted";
   private final String ON_SERVICE_STOPPED           = "onServiceStopped";
   private final String ON_READ_DATA_FROM_PORT       = "onReadDataFromPort";
-  private final String ON_USB_PERMISSIONS_GRANTED   = "onUsbPermissionGranted";
+  private final String ON_USB_PERMISSION_GRANTED    = "onUsbPermissionGranted";
 
   private final ReactApplicationContext reactContext;
   public RNSerialportModule(ReactApplicationContext reactContext) {
@@ -126,7 +126,7 @@ public class RNSerialportModule extends ReactContextBaseJavaModule {
         case ACTION_USB_NOT_OPENED: emitErrorEvent(Error.COULD_NOT_OPEN_SERIALPORT); break;
         case ACTION_USB_NOT_SUPPORTED: emitErrorEvent(Error.DEVICE_NOT_SUPPORTED); break;
         case ACTION_USB_PERMISSION : startConnection(intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)); break;
-        case ACTION_USB_PERMISSION_GRANTED: emitEvent(ON_USB_PERMISSIONS_GRANTED, null); break;
+        case ACTION_USB_PERMISSION_GRANTED: emitEvent(ON_USB_PERMISSION_GRANTED, null); break;
         case ACTION_USB_PERMISSION_NOT_GRANTED: emitErrorEvent(Error.USER_DID_NOT_ALLOW_TO_CONNECT); break;
       }
     }
@@ -314,7 +314,7 @@ public class RNSerialportModule extends ReactContextBaseJavaModule {
 
       this.device = d;
 
-      requestUserPermission();
+      requestUsbPermission(this.device);
 
     } catch (Exception err) {
       emitErrorEvent(Error.CONNECTION_FAILED, "exceptionMessage", err.getMessage());
@@ -431,7 +431,6 @@ public class RNSerialportModule extends ReactContextBaseJavaModule {
           : UsbSerialDevice.createUsbSerialDevice(driver, device, connection, portInterface);
 
         if(serialPort == null) {
-          // No driver for given device
           reactContext.sendBroadcast(new Intent(ACTION_USB_NOT_SUPPORTED));
           return;
         }
@@ -456,7 +455,7 @@ public class RNSerialportModule extends ReactContextBaseJavaModule {
     }
   }
 
-  private void requestUserPermission() {
+  private void requestUsbPermission(UsbDevice device) {
     if(device == null)
       return;
     usbManager.requestPermission(device, PendingIntent.getBroadcast(reactContext, 0 , new Intent(ACTION_USB_PERMISSION), PendingIntent.FLAG_IMMUTABLE));
