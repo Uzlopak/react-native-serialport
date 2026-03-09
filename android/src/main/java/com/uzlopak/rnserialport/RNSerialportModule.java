@@ -104,7 +104,7 @@ public class RNSerialportModule extends ReactContextBaseJavaModule {
           }
           break;
         case Definitions.ACTION_USB_PERMISSION :
-          boolean granted = arg1.getExtras().getBoolean(UsbManager.EXTRA_PERMISSION_GRANTED);
+          boolean granted = arg1.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false);
           startConnection(granted);
           break;
         case Definitions.ACTION_USB_PERMISSION_GRANTED:
@@ -190,12 +190,12 @@ public class RNSerialportModule extends ReactContextBaseJavaModule {
 
   @ReactMethod
   public void setDriver(String driver) {
-    if(driver.isEmpty() || !driverList.contains(driver.trim())) {
+    if(driver == null || driver.isEmpty() || !driverList.contains(driver.trim())) {
       eventEmit(Definitions.ON_ERROR_EVENT, createError(Definitions.ERROR_DRIVER_TYPE_NOT_FOUND, Definitions.ERROR_DRIVER_TYPE_NOT_FOUND_MESSAGE));
       return;
     }
 
-    this.driver = driver;
+    this.driver = driver.trim();
   }
 
   /********************************************* END **********************************************/
@@ -275,7 +275,7 @@ public class RNSerialportModule extends ReactContextBaseJavaModule {
         return;
       }
 
-      if(deviceName.isEmpty() || deviceName.trim().isEmpty()) {
+      if(deviceName == null || deviceName.trim().isEmpty()) {
         eventEmit(Definitions.ON_ERROR_EVENT, createError(Definitions.ERROR_CONNECT_DEVICE_NAME_INVALID, Definitions.ERROR_CONNECT_DEVICE_NAME_INVALID_MESSAGE));
         return;
       }
@@ -350,7 +350,13 @@ public class RNSerialportModule extends ReactContextBaseJavaModule {
       eventEmit(Definitions.ON_ERROR_EVENT, createError(Definitions.ERROR_THERE_IS_NO_CONNECTION, Definitions.ERROR_THERE_IS_NO_CONNECTION_MESSAGE));
       return;
     }
-    serialPort.write(bytes);
+
+    byte[] buffer = new byte[bytes.size()];
+    for (int i = 0; i < bytes.size(); i++) {
+      buffer[i] = (byte) bytes.getInt(i);
+    }
+
+    serialPort.write(buffer);
   }
 
   ///////////////////////////////////////////////USB SERVICE /////////////////////////////////////////////////////////
@@ -458,7 +464,7 @@ public class RNSerialportModule extends ReactContextBaseJavaModule {
   private void requestUserPermission() {
     if(device == null)
       return;
-    PendingIntent mPendingIntent = PendingIntent.getBroadcast(reactContext, 0 , new Intent(Definitions.ACTION_USB_PERMISSION), 0);
+    PendingIntent mPendingIntent = PendingIntent.getBroadcast(reactContext, 0 , new Intent(Definitions.ACTION_USB_PERMISSION), PendingIntent.FLAG_IMMUTABLE);
     usbManager.requestPermission(device, mPendingIntent);
   }
 
@@ -467,6 +473,10 @@ public class RNSerialportModule extends ReactContextBaseJavaModule {
       Intent intent = new Intent(Definitions.ACTION_USB_PERMISSION_GRANTED);
       reactContext.sendBroadcast(intent);
       connection = usbManager.openDevice(device);
+      if (connection == null) {
+        eventEmit(Definitions.ON_ERROR_EVENT, createError(Definitions.ERROR_COULD_NOT_OPEN_SERIALPORT, Definitions.ERROR_COULD_NOT_OPEN_SERIALPORT_MESSAGE));
+        return;
+      }
       new ConnectionThread().start();
     } else {
       connection = null;
@@ -484,6 +494,7 @@ public class RNSerialportModule extends ReactContextBaseJavaModule {
       Intent intent = new Intent(Definitions.ACTION_USB_DISCONNECTED);
       reactContext.sendBroadcast(intent);
       serialPortConnected = false;
+      serialPort = null;
     } else {
       Intent intent = new Intent(Definitions.ACTION_USB_DETACHED);
       reactContext.sendBroadcast(intent);
