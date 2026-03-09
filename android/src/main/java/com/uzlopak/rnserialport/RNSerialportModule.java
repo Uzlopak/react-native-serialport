@@ -91,8 +91,6 @@ public class RNSerialportModule extends ReactContextBaseJavaModule {
     return "RNSerialport";
   }
 
-  //SUPPORTED DRIVER LIST
-
   private final List<String> driverList = new ArrayList<String>(Arrays.asList("AUTO", "ftdi", "cp210x", "pl2303", "ch34x", "cdc"));
 
   private UsbManager usbManager;
@@ -101,7 +99,6 @@ public class RNSerialportModule extends ReactContextBaseJavaModule {
   private UsbSerialDevice serialPort;
   private boolean serialPortConnected;
 
-  //Connection Settings
   private int DATA_BIT     = UsbSerialInterface.DATA_BITS_8;
   private int STOP_BIT     = UsbSerialInterface.STOP_BITS_1;
   private int PARITY       = UsbSerialInterface.PARITY_NONE;
@@ -154,8 +151,6 @@ public class RNSerialportModule extends ReactContextBaseJavaModule {
     emitEvent(ON_ERROR_EVENT, err);
   }
 
-  /******************************* BEGIN PUBLIC SETTER METHODS **********************************/
-
   @ReactMethod
   public void setDataBit(int DATA_BIT) {
     this.DATA_BIT = DATA_BIT;
@@ -202,8 +197,6 @@ public class RNSerialportModule extends ReactContextBaseJavaModule {
 
     this.driver = driver.trim();
   }
-
-  /********************************************* END **********************************************/
 
   @ReactMethod
   public void startUsbService() {
