@@ -15,7 +15,6 @@ export interface IOnError {
   exceptionErrorMessage?: string;
 }
 export interface IOnServiceStarted {
-  deviceAttached: boolean
 }
 
 interface DefinitionsStatic {

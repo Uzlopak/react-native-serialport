@@ -156,12 +156,7 @@ export default class App extends Component<Props> {
 
   onDisconnected() { console.log("Disconnected") }
 
-  onServiceStarted(response) {
-    //returns usb status when service started
-    if(response.deviceAttached) { 
-      this.onDeviceAttached();
-    }
-  }
+  onServiceStarted() { console.log("Service started") }
 
   onServiceStopped() { console.log("Service stopped") }
 

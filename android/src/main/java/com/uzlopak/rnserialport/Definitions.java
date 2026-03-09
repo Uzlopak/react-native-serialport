@@ -47,4 +47,26 @@ public class Definitions {
     public static final String ERROR_SERVICE_ALREADY_STARTED_MESSAGE            = "Usb service is already started";
     public static final String ERROR_SERVICE_ALREADY_STOPPED_MESSAGE            = "Usb service is already stopped";
 
+    public static final String ACTION_USB_READY                        = "com.felhr.connectivityservices.USB_READY";
+    public static final String ACTION_USB_ATTACHED                     = "android.hardware.usb.action.USB_DEVICE_ATTACHED";
+    public static final String ACTION_USB_DETACHED                     = "android.hardware.usb.action.USB_DEVICE_DETACHED";
+    public static final String ACTION_USB_NOT_SUPPORTED                = "com.felhr.usbservice.USB_NOT_SUPPORTED";
+    public static final String ACTION_NO_USB                           = "com.felhr.usbservice.NO_USB";
+    public static final String ACTION_USB_PERMISSION_GRANTED           = "com.felhr.usbservice.USB_PERMISSION_GRANTED";
+    public static final String ACTION_USB_PERMISSION_NOT_GRANTED       = "com.felhr.usbservice.USB_PERMISSION_NOT_GRANTED";
+    public static final String ACTION_USB_DISCONNECTED                 = "com.felhr.usbservice.USB_DISCONNECTED";
+    public static final String ACTION_USB_PERMISSION                   = "com.android.example.USB_PERMISSION";
+    public static final String ACTION_USB_NOT_OPENED                   = "com.uzlopak.rnserialport.USB_NOT_OPENED";
+    public static final String ACTION_USB_CONNECT                      = "com.uzlopak.rnserialport.USB_CONNECT";
+
+    //react-native events
+    public static final String ON_ERROR_EVENT               = "onError";
+    public static final String ON_CONNECTED_EVENT           = "onConnected";
+    public static final String ON_DISCONNECTED_EVENT        = "onDisconnected";
+    public static final String ON_DEVICE_ATTACHED_EVENT     = "onDeviceAttached";
+    public static final String ON_DEVICE_DETACHED_EVENT     = "onDeviceDetached";
+    public static final String ON_SERVICE_STARTED           = "onServiceStarted";
+    public static final String ON_SERVICE_STOPPED           = "onServiceStopped";
+    public static final String ON_READ_DATA_FROM_PORT       = "onReadDataFromPort";
+    public static final String ON_USB_PERMISSIONS_GRANTED   = "onUsbPermissionGranted";
 }
