@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.google.common.primitives.UnsignedBytes;
 
@@ -69,6 +70,8 @@ public class RNSerialportModule extends ReactContextBaseJavaModule {
   private final String ACTION_USB_PERMISSION                   = "com.uzlopak.rnserialport.USB_PERMISSION";
   private final String ACTION_USB_PERMISSION_GRANTED           = "com.uzlopak.rnserialport.USB_PERMISSION_GRANTED";
   private final String ACTION_USB_PERMISSION_NOT_GRANTED       = "com.uzlopak.rnserialport.USB_PERMISSION_NOT_GRANTED";
+  
+  private final String EXTRA_USB_DEVICE_NAME                   = "com.uzlopak.rnserialport.USB_DEVICE_NAME";
 
   private final String ON_ERROR_EVENT               = "onError";
   private final String ON_CONNECTED_EVENT           = "onConnected";
@@ -93,11 +96,11 @@ public class RNSerialportModule extends ReactContextBaseJavaModule {
 
   private final List<String> driverList = new ArrayList<String>(Arrays.asList("AUTO", "ftdi", "cp210x", "pl2303", "ch34x", "cdc"));
 
+  private final ConcurrentHashMap<String, UsbSerialDevice> serialPorts = new ConcurrentHashMap<String, UsbSerialDevice>();
+
   private UsbManager usbManager;
   private UsbDevice device;
   private UsbDeviceConnection connection;
-  private UsbSerialDevice serialPort;
-  private boolean serialPortConnected;
 
   private int DATA_BIT     = UsbSerialInterface.DATA_BITS_8;
   private int STOP_BIT     = UsbSerialInterface.STOP_BITS_1;
@@ -118,7 +121,14 @@ public class RNSerialportModule extends ReactContextBaseJavaModule {
       switch (intent.getAction()) {
         case ACTION_USB_ATTACHED: emitEvent(ON_DEVICE_ATTACHED_EVENT, null); checkAutoConnect(); break;
         case ACTION_USB_CONNECTED: emitEvent(ON_CONNECTED_EVENT, null); break;
-        case ACTION_USB_DETACHED: emitEvent(ON_DEVICE_DETACHED_EVENT, null); stopConnection(); break;
+        case ACTION_USB_DETACHED: {
+          UsbDevice device = intent.getExtras().getParcelable(UsbManager.EXTRA_DEVICE);
+          UsbSerialDevice serialPort = serialPorts.get(device.getDeviceName());
+          emitEvent(ON_DEVICE_DETACHED_EVENT, null);
+          stopConnection(serialPort);
+          serialPorts.remove(device.getDeviceName());
+           break;
+        }
         case ACTION_USB_DISCONNECTED: emitEvent(ON_DISCONNECTED_EVENT, null); break;
         case ACTION_USB_NOT_OPENED: emitErrorEvent(Error.COULD_NOT_OPEN_SERIALPORT); break;
         case ACTION_USB_NOT_SUPPORTED: emitErrorEvent(Error.DEVICE_NOT_SUPPORTED); break;
@@ -155,14 +165,17 @@ public class RNSerialportModule extends ReactContextBaseJavaModule {
   public void setDataBit(int DATA_BIT) {
     this.DATA_BIT = DATA_BIT;
   }
+
   @ReactMethod
   public void setStopBit(int STOP_BIT) {
     this.STOP_BIT = STOP_BIT;
   }
+
   @ReactMethod
   public void setParity(int PARITY) {
     this.PARITY = PARITY;
   }
+
   @ReactMethod
   public void setFlowControl(int FLOW_CONTROL) {
     this.FLOW_CONTROL = FLOW_CONTROL;
@@ -172,10 +185,12 @@ public class RNSerialportModule extends ReactContextBaseJavaModule {
   public void setAutoConnect(boolean autoConnect) {
     this.autoConnect = autoConnect;
   }
+
   @ReactMethod
   public void setAutoConnectBaudRate(int baudRate) {
     this.autoConnectBaudRate = baudRate;
   }
+
   @ReactMethod
   public void setInterface(int iFace) {
     this.portInterface = iFace;
@@ -193,7 +208,7 @@ public class RNSerialportModule extends ReactContextBaseJavaModule {
 
   @ReactMethod
   public void startUsbService() {
-    if(usbServiceStarted) {
+    if(this.usbServiceStarted) {
       return;
     }
   
@@ -212,7 +227,7 @@ public class RNSerialportModule extends ReactContextBaseJavaModule {
 
     usbManager = (UsbManager) reactContext.getSystemService(Context.USB_SERVICE);
 
-    usbServiceStarted = true;
+    this.usbServiceStarted = true;
 
     emitEvent(ON_SERVICE_STARTED, null);
 
@@ -223,11 +238,11 @@ public class RNSerialportModule extends ReactContextBaseJavaModule {
 
   @ReactMethod
   public void stopUsbService() {
-    if(serialPortConnected) {
+    if(!serialPorts.isEmpty()) {
       emitErrorEvent(Error.SERVICE_STOP_FAILED);
       return;
     }
-    if(!usbServiceStarted) {
+    if(!this.usbServiceStarted) {
       return;
     }
     reactContext.unregisterReceiver(mUsbReceiver);
@@ -235,14 +250,24 @@ public class RNSerialportModule extends ReactContextBaseJavaModule {
     emitEvent(ON_SERVICE_STOPPED, null);
   }
 
+  @Override
+  public void onCatalystInstanceDestroy() {
+      super.onCatalystInstanceDestroy();
+      if (this.usbServiceStarted) {
+          reactContext.unregisterReceiver(mUsbReceiver);
+          this.usbServiceStarted = false;
+      }
+      this.closeAllConnections();
+  }
+
   @ReactMethod
   public void getDeviceList(Promise promise) {
-    if(!usbServiceStarted) {
+    if(!this.usbServiceStarted) {
       promise.reject(Error.USB_SERVICE_NOT_STARTED.code, Error.USB_SERVICE_NOT_STARTED.message);
       return;
     }
     
-    HashMap<String, UsbDevice> devices = usbManager.getDeviceList();
+    HashMap<String, UsbDevice> devices = this.usbManager.getDeviceList();
 
     WritableArray deviceList = Arguments.createArray();
 
@@ -267,18 +292,18 @@ public class RNSerialportModule extends ReactContextBaseJavaModule {
   @ReactMethod
   public void connectDevice(String deviceName, int baudRate) {
     try {
-      if(!usbServiceStarted){
+      if(!this.usbServiceStarted){
         emitErrorEvent(Error.USB_SERVICE_NOT_STARTED);
         return;
       }
-
-      if(serialPortConnected) {
-        emitErrorEvent(Error.SERIALPORT_ALREADY_CONNECTED);
+      
+      if(deviceName == null || deviceName.trim().isEmpty()) {
+        emitErrorEvent(Error.CONNECT_DEVICE_NAME_INVALID, "deviceName", deviceName);
         return;
       }
 
-      if(deviceName == null || deviceName.trim().isEmpty()) {
-        emitErrorEvent(Error.CONNECT_DEVICE_NAME_INVALID, "deviceName", deviceName);
+      if(serialPorts.get(deviceName) != null) {
+        emitErrorEvent(Error.SERIALPORT_ALREADY_CONNECTED);
         return;
       }
 
@@ -308,27 +333,44 @@ public class RNSerialportModule extends ReactContextBaseJavaModule {
   }
 
   @ReactMethod
-  public void disconnect() {
-    if(!usbServiceStarted){
+  public void disconnect(String deviceName) {
+    if(!this.usbServiceStarted){
       emitErrorEvent(Error.USB_SERVICE_NOT_STARTED);
       return;
     }
-
-    if(!serialPortConnected) {
+   
+    UsbSerialDevice serialPort = serialPorts.get(deviceName);
+    if(serialPort == null) {
       emitErrorEvent(Error.SERIALPORT_ALREADY_DISCONNECTED);
       return;
     }
-    stopConnection();
+    
+    stopConnection(serialPort);
+    serialPorts.remove(deviceName);
+  }
+
+  private void closeAllConnections() {
+      new ArrayList<>(serialPorts.values()).forEach(this::stopConnection);
+      serialPorts.clear();
   }
 
   @ReactMethod
-  public void isOpen(Promise promise) {
-    promise.resolve(serialPortConnected);
+  public void disconnectAllDevices() {
+      if(!this.usbServiceStarted) {
+          emitErrorEvent(Error.USB_SERVICE_NOT_STARTED);
+          return;
+      }
+      closeAllConnections();
+  }
+
+  @ReactMethod
+  public void isOpen(String deviceName, Promise promise) {
+    promise.resolve(serialPorts.containsKey(deviceName));
   }
 
  @ReactMethod
  public void isServiceStarted(Promise promise) {
-    promise.resolve(usbServiceStarted);
+    promise.resolve(this.usbServiceStarted);
  }
 
   @ReactMethod
@@ -343,12 +385,14 @@ public class RNSerialportModule extends ReactContextBaseJavaModule {
   }
 
   @ReactMethod
-  public void write(ReadableArray bytes) {
-    if(!usbServiceStarted){
+  public void write(String deviceName, ReadableArray bytes) {
+    if(!this.usbServiceStarted){
       emitErrorEvent(Error.USB_SERVICE_NOT_STARTED);
       return;
     }
-    if(!serialPortConnected || serialPort == null) {
+
+    UsbSerialDevice serialPort = serialPorts.get(deviceName);
+    if(serialPort == null) {
       emitErrorEvent(Error.NO_CONNECTION);
       return;
     }
@@ -365,7 +409,7 @@ public class RNSerialportModule extends ReactContextBaseJavaModule {
   }
 
   private UsbDevice chooseDevice(String deviceName) {
-    HashMap<String, UsbDevice> usbDevices = usbManager.getDeviceList();
+    HashMap<String, UsbDevice> usbDevices = this.usbManager.getDeviceList();
     if(usbDevices.isEmpty()) {
       return null;
     }
@@ -382,7 +426,7 @@ public class RNSerialportModule extends ReactContextBaseJavaModule {
   }
 
   private UsbDevice chooseFirstDevice() {
-    HashMap<String, UsbDevice> usbDevices = usbManager.getDeviceList();
+    HashMap<String, UsbDevice> usbDevices = this.usbManager.getDeviceList();
     if(usbDevices.isEmpty()) {
       return null;
     }
@@ -400,7 +444,7 @@ public class RNSerialportModule extends ReactContextBaseJavaModule {
   }
 
   private void checkAutoConnect() {
-    if(!autoConnect || serialPortConnected)
+    if(!autoConnect || !serialPorts.isEmpty())
       return;
 
     UsbDevice d = chooseFirstDevice();
@@ -409,12 +453,20 @@ public class RNSerialportModule extends ReactContextBaseJavaModule {
     }
   }
   private class ConnectionThread extends Thread {
+    private final UsbDevice threadUsbDevice;
+    private final UsbDeviceConnection threadUsbDeviceConnection;
+  
+    ConnectionThread(UsbDevice device, UsbDeviceConnection connection) {
+        this.threadUsbDevice = device;
+        this.threadUsbDeviceConnection = connection;
+    }
+  
     @Override
     public void run() {
       try {
-        serialPort = driver.equals("AUTO")
-          ? UsbSerialDevice.createUsbSerialDevice(device, connection, portInterface)
-          : UsbSerialDevice.createUsbSerialDevice(driver, device, connection, portInterface);
+        UsbSerialDevice serialPort = driver.equals("AUTO")
+          ? UsbSerialDevice.createUsbSerialDevice(threadUsbDevice, threadUsbDeviceConnection, portInterface)
+          : UsbSerialDevice.createUsbSerialDevice(driver, threadUsbDevice, threadUsbDeviceConnection, portInterface);
 
         if(serialPort == null) {
           reactContext.sendBroadcast(new Intent(ACTION_USB_NOT_SUPPORTED));
@@ -426,15 +478,44 @@ public class RNSerialportModule extends ReactContextBaseJavaModule {
           return;
         }
 
-        serialPortConnected = true;
+        serialPorts.put(this.threadUsbDevice.getDeviceName(), serialPort);
         serialPort.setBaudRate(autoConnect ? autoConnectBaudRate : BAUD_RATE);
         serialPort.setDataBits(DATA_BIT);
         serialPort.setStopBits(STOP_BIT);
         serialPort.setParity(PARITY);
         serialPort.setFlowControl(FLOW_CONTROL);
-        serialPort.read(mCallback);
 
-        reactContext.sendBroadcast(new Intent(ACTION_USB_CONNECTED));
+        UsbSerialInterface.UsbReadCallback usbReadCallback = new UsbSerialInterface.UsbReadCallback() {
+          @Override
+          public void onReceivedData(byte[] bytes) {
+            if (bytes.length == 0) {
+              return;
+            }
+
+            try {
+              WritableArray uint8Array = new WritableNativeArray();
+              for(byte b: bytes) {
+                uint8Array.pushInt(UnsignedBytes.toInt(b));
+              }
+
+              WritableMap params = Arguments.createMap();
+              params.putArray("payload", uint8Array);
+
+              params.putString("deviceName", threadUsbDevice.getDeviceName());
+
+              emitEvent(ON_READ_DATA_FROM_PORT, params);
+
+            } catch (Exception err) {
+              emitErrorEvent(Error.COULD_NOT_READ_DATA, "exceptionMessage", err.getMessage());
+            }
+          }
+        };
+
+        serialPort.read(usbReadCallback);
+
+        Intent connectedIntent = new Intent(ACTION_USB_CONNECTED);
+        connectedIntent.putExtra(EXTRA_USB_DEVICE_NAME, this.threadUsbDevice.getDeviceName());
+        reactContext.sendBroadcast(connectedIntent);
       } catch (Exception error) {
         emitErrorEvent(Error.CONNECTION_FAILED, "exceptionMessage", error.getMessage());
       }
@@ -444,7 +525,7 @@ public class RNSerialportModule extends ReactContextBaseJavaModule {
   private void requestUsbPermission(UsbDevice device) {
     if(device == null)
       return;
-    usbManager.requestPermission(device, PendingIntent.getBroadcast(reactContext, 0 , new Intent(ACTION_USB_PERMISSION), PendingIntent.FLAG_IMMUTABLE));
+    this.usbManager.requestPermission(device, PendingIntent.getBroadcast(reactContext, 0 , new Intent(ACTION_USB_PERMISSION), PendingIntent.FLAG_IMMUTABLE));
   }
 
   private void startConnection(boolean granted) {
@@ -456,45 +537,24 @@ public class RNSerialportModule extends ReactContextBaseJavaModule {
     }
 
     reactContext.sendBroadcast(new Intent(ACTION_USB_PERMISSION_GRANTED));
-    connection = usbManager.openDevice(device);
+    connection = this.usbManager.openDevice(device);
 
     if (connection == null) {
       emitErrorEvent(Error.COULD_NOT_OPEN_SERIALPORT);
       return;
     }
 
-    new ConnectionThread().start();
+    new ConnectionThread(this.device, this.connection).start();
   }
 
-  private void stopConnection() {
-    if (serialPortConnected) {
-      serialPort.close();
-      reactContext.sendBroadcast(new Intent(ACTION_USB_DISCONNECTED));
-    }
+  private void stopConnection(UsbSerialDevice serialPort) {
+    if (serialPort == null)
+      return;
 
-    connection = null;
-    device = null;
-    serialPortConnected = false;
-    serialPort = null;
+    serialPort.close();
+
+    Intent intent = new Intent(ACTION_USB_DISCONNECTED);
+    intent.putExtra(EXTRA_USB_DEVICE_NAME, serialPort.getUsbDevice().getDeviceName());
+    reactContext.sendBroadcast(intent);
   }
-
-  private final UsbSerialInterface.UsbReadCallback mCallback = new UsbSerialInterface.UsbReadCallback() {
-    @Override
-    public void onReceivedData(byte[] bytes) {
-      try {
-        WritableArray uint8Array = new WritableNativeArray();
-        for(byte b: bytes) {
-          uint8Array.pushInt(UnsignedBytes.toInt(b));
-        }
-
-        WritableMap params = Arguments.createMap();
-        params.putArray("payload", uint8Array);
-
-        emitEvent(ON_READ_DATA_FROM_PORT, params);
-
-      } catch (Exception err) {
-        emitErrorEvent(Error.COULD_NOT_READ_DATA, "exceptionMessage", err.getMessage());
-      }
-    }
-  };
 }
