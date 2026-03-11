@@ -1,12 +1,12 @@
 export interface Device {
-  deviceId: string;
+  deviceId: number;
   deviceName: string;
   vendorId: number;
   productId: number;
 }
 
 export interface IOnReadData {
-  payload: string | Array<number>
+  payload: Array<number>
 }
 export interface IOnError {
   code: string;
@@ -66,7 +66,7 @@ interface ActionsStatic {
 export var actions: ActionsStatic;
 
 type DataBits = 5 | 6 | 7 | 8;
-type StopBits = 1 | 2 | 3;
+type StopBits = 1 | 1.5 | 2;
 type Parities = 0 | 1 | 2 | 3 | 4;
 type FlowControls = 0 | 1 | 2 | 3;
 type Drivers = "AUTO" | "cdc" | "ch34x" | "cp210x" | "ftdi" | "pl2303";
@@ -88,10 +88,11 @@ interface RNSerialportStatic {
   /**
    * Returns status via Promise
    *
+   * @param {string} deviceName
    * @returns {Promise<boolean>}
    * @memberof RNSerialportStatic
    */
-  isOpen(): Promise<boolean>
+  isOpen(deviceName: string): Promise<boolean>
 
   /**
    * Returns status boolean via Promise
@@ -198,16 +199,24 @@ interface RNSerialportStatic {
   /**
    * Closes the connection
    *
+   * @param {string} deviceName
    * @memberof RNSerialportStatic
    */
-  disconnect(): void;
+  disconnect(deviceName: string): void;
 
+  /**
+   * Closes all open connections
+   *
+   * @memberof RNSerialportStatic
+   */
+  disconnectAllDevices(): void;
   /**
    * Writes Uint8Array to port
    *
    * @param {Uint8Array} data
    * @memberof RNSerialportStatic
    */
-  write(data: Uint8Array): void;
+  write(deviceName: string, data: Uint8Array): void;
 }
+
 export var RNSerialport: RNSerialportStatic;
