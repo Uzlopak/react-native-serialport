@@ -11,7 +11,7 @@ const definitions = {
   },
   STOP_BITS: {
     STOP_BITS_1 : 1,
-    STOP_BITS_15: 3,
+    STOP_BITS_15: 1.5,
     STOP_BITS_2 : 2
   },
   PARITIES: {
