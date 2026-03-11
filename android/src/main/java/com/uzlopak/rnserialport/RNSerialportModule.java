@@ -116,10 +116,10 @@ public class RNSerialportModule extends ReactContextBaseJavaModule {
   volatile private int flowControl  = UsbSerialInterface.FLOW_CONTROL_OFF;
   volatile private int baudRate     = 9600;
 
-  private boolean autoConnect     = false;
-  private int autoConnectBaudRate = 9600;
-  private int portInterface       = -1;
-  private String driver           = "AUTO";
+  volatile private boolean autoConnect     = false;
+  volatile private int autoConnectBaudRate = 9600;
+  volatile private int portInterface       = -1;
+  volatile private String driver           = "AUTO";
 
   private boolean usbServiceStarted = false;
 
@@ -200,7 +200,7 @@ public class RNSerialportModule extends ReactContextBaseJavaModule {
     emitEvent(ON_ERROR_EVENT, err);
   }
 
-  private void emitEventByDeviceIntent(String eventName, DeviceIntent intent) {
+  private void emitEventByDeviceIntent(String eventName, Intent intent) {
     WritableMap data = Arguments.createMap();
     UsbDevice device = DeviceIntent.getDevice(intent);
 
@@ -294,12 +294,19 @@ public class RNSerialportModule extends ReactContextBaseJavaModule {
 
   @ReactMethod
   public void stopUsbService() {
-    if (!serialPorts.isEmpty()) {
+    this.stopUsbService(false);
+  }
+
+  public void stopUsbService(boolean force) {
+    if (!force && !serialPorts.isEmpty()) {
       emitErrorEvent(Error.SERVICE_STOP_FAILED);
       return;
     }
     if (!this.usbServiceStarted) {
       return;
+    }
+    if (force) {
+      closeAllConnections();
     }
     reactContext.unregisterReceiver(mUsbReceiver);
     this.usbServiceStarted = false;
@@ -308,12 +315,8 @@ public class RNSerialportModule extends ReactContextBaseJavaModule {
 
   @Override
   public void onCatalystInstanceDestroy() {
-    super.onCatalystInstanceDestroy();
-    if (this.usbServiceStarted) {
-      reactContext.unregisterReceiver(mUsbReceiver);
-      this.usbServiceStarted = false;
-    }
-    this.closeAllConnections();
+      super.onCatalystInstanceDestroy();
+      this.stopUsbService(true);
   }
 
   @ReactMethod
