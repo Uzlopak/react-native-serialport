@@ -37,7 +37,7 @@ import com.felhr.usbserial.UsbSerialInterface;
 class DeviceIntent extends Intent {
   DeviceIntent(String action, UsbDevice device) {
     super(action);
-    this.putExtra(UsbManager.EXTRA_DEVICE, device);
+    if (device != null) this.putExtra(UsbManager.EXTRA_DEVICE, device);
   }
 
   static UsbDevice getDevice(Intent intent) {
@@ -121,7 +121,7 @@ public class RNSerialportModule extends ReactContextBaseJavaModule {
   volatile private int portInterface       = -1;
   volatile private String driver           = "AUTO";
 
-  private boolean usbServiceStarted = false;
+  volatile private boolean usbServiceStarted = false;
 
   private final BroadcastReceiver mUsbReceiver = new BroadcastReceiver() {
     private WritableMap createEventData (String deviceName) {
@@ -305,10 +305,10 @@ public class RNSerialportModule extends ReactContextBaseJavaModule {
     if (!this.usbServiceStarted) {
       return;
     }
+    reactContext.unregisterReceiver(mUsbReceiver);
     if (force) {
       closeAllConnections();
     }
-    reactContext.unregisterReceiver(mUsbReceiver);
     this.usbServiceStarted = false;
     emitEvent(ON_SERVICE_STOPPED, null);
   }
@@ -492,7 +492,7 @@ public class RNSerialportModule extends ReactContextBaseJavaModule {
   }
 
   private void checkAutoConnect() {
-    if (!autoConnect || !serialPorts.isEmpty())
+    if (!autoConnect || usbManager == null || !serialPorts.isEmpty())
       return;
     UsbDevice d = chooseFirstDevice();
     if (d != null) {
@@ -608,7 +608,7 @@ public class RNSerialportModule extends ReactContextBaseJavaModule {
       return;
     Intent intent = new Intent(ACTION_USB_PERMISSION);
     intent.putExtra(UsbManager.EXTRA_DEVICE, device);
-    this.usbManager.requestPermission(device, PendingIntent.getBroadcast(reactContext, 0, intent, PendingIntent.FLAG_MUTABLE));
+    this.usbManager.requestPermission(device, PendingIntent.getBroadcast(reactContext, device.getDeviceName().hashCode(), intent, PendingIntent.FLAG_MUTABLE));
   }
 
   private void startConnection(UsbDevice device) {
